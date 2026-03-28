@@ -3,7 +3,6 @@ import { useState } from 'react'
 function App() {
   const [colors, setColors] = useState([])
   const [imagePreview, setImagePreview] = useState(null)
-  // 【追加】ローディング状態を管理するstate
   const [isLoading, setIsLoading] = useState(false)
 
   const handleImageUpload = async (event) => {
@@ -11,9 +10,7 @@ function App() {
     if (!file) return
 
     setImagePreview(URL.createObjectURL(file))
-    // 【追加】アップロード開始時にローディングをtrueにする
     setIsLoading(true)
-    // パレットを一度クリアする
     setColors([])
 
     const formData = new FormData()
@@ -30,28 +27,31 @@ function App() {
       console.error('エラーが発生しました:', error)
       alert('色抽出に失敗しました。')
     } finally {
-      // 【追加】成功しても失敗しても、処理が終わったらローディングをfalseにする
       setIsLoading(false)
     }
   }
 
   return (
-    <div style={{ padding: '2rem', fontFamily: 'sans-serif', maxWidth: '800px', margin: '0 auto' }}>
+    <div style={{ padding: '2rem', fontFamily: 'sans-serif', maxWidth: '800px', margin: '0 auto', color: '#333' }}>
       <h1>🎨 Palette Harmony Analyzer</h1>
-      <p>イラストをアップロードして、使われている色を抽出します。</p>
+      <p>イラストをアップロードして、使われている色を網羅したパレット（最大100色）を作成します。</p>
       
-      <input type="file" accept="image/*" onChange={handleImageUpload} style={{ marginBottom: '1rem' }} />
+      <input type="file" accept="image/*" onChange={handleImageUpload} style={{ 
+        marginBottom: '1rem',
+        padding: '10px',
+        border: '1px solid #ddd',
+        borderRadius: '4px',
+        backgroundColor: '#f9f9f9'
+      }} />
       
       {imagePreview && (
-        <div style={{ marginTop: '1rem' }}>
-          <img src={imagePreview} alt="Preview" style={{ maxWidth: '100%', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }} />
+        <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+          <img src={imagePreview} alt="Preview" style={{ maxWidth: '100%', maxHeight: '400px', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }} />
         </div>
       )}
 
-      {/* 【追加】ローディング中の表示（スピナー） */}
       {isLoading && (
         <div style={{ marginTop: '2rem', textAlign: 'center' }}>
-          {/* シンプルなCSSスピナー */}
           <div className="spinner" style={{
             border: '8px solid #f3f3f3',
             borderTop: '8px solid #3498db',
@@ -61,33 +61,43 @@ function App() {
             animation: 'spin 1s linear infinite',
             margin: '0 auto'
           }}></div>
-          <p style={{ marginTop: '10px', color: '#555' }}>色を抽出しています（AIが計算中...）</p>
+          <p style={{ marginTop: '10px', color: '#555' }}>色を抽出しています（AIが頻度分析中...）</p>
         </div>
       )}
 
-      {/* パレットの表示（ローディング中は非表示にする） */}
       {!isLoading && colors.length > 0 && (
-        <div style={{ marginTop: '2rem' }}>
-          <h3>抽出されたパレット（主要5色）</h3>
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+        <div style={{ marginTop: '2rem', border: '1px solid #ddd', borderRadius: '8px', padding: '1rem', backgroundColor: '#fff' }}>
+          {/* 【修正】見出しを変更 */}
+          <h3 style={{ marginTop: 0 }}>抽出されたパレット（網羅的・最大100色）</h3>
+          {/* 【修正】パレット部分に最大高さを設けてスクロールできるようにする */}
+          <div style={{ 
+            display: 'flex', 
+            gap: '8px', 
+            flexWrap: 'wrap', 
+            maxHeight: '300px', // 最大高さを設定
+            overflowY: 'auto',   // 縦スクロールを許可
+            padding: '10px',
+            border: '1px solid #f0f0f0',
+            borderRadius: '4px',
+            backgroundColor: '#fafafa'
+          }}>
             {colors.map((color, index) => (
-              <div key={index} style={{ textAlign: 'center' }}>
+              <div key={index} style={{ textAlign: 'center', flex: '0 0 auto' }}>
                 <div style={{ 
-                  width: '60px', 
-                  height: '60px', 
+                  width: '50px', // 少し小さくする
+                  height: '50px', 
                   backgroundColor: color, 
-                  borderRadius: '8px', 
+                  borderRadius: '6px', 
                   border: '1px solid #ddd',
                   boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
                 }}></div>
-                <p style={{ fontSize: '12px', marginTop: '4px', fontFamily: 'monospace' }}>{color}</p>
+                <p style={{ fontSize: '10px', marginTop: '4px', fontFamily: 'monospace', color: '#666' }}>{color}</p>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* 【追加】スピナーのアニメーション用のCSS（本来はCSSファイルに書くべきですが、今回はここに記述します） */}
       <style>{`
         @keyframes spin {
           0% { transform: rotate(0deg); }
