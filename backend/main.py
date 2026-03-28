@@ -23,13 +23,35 @@ async def extract_colors(file: UploadFile = File(...)):
     contents = await file.read()
     nparr = np.frombuffer(contents, np.uint8)
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-
-    # OpenCVのBGRをRGBに変換し、AIが処理しやすい形に変形
+    
+    # OpenCVのBGRをRGBに変換
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    pixels = img.reshape(-1, 3)
 
-    # k-means法で5色を抽出
-    kmeans = KMeans(n_clusters=5, random_state=42)
+    # ========================================================
+    # 【パフォーマンス向上】画像を大幅にリサイズして、ピクセル数を減らす
+    # ========================================================
+    # AI処理用の最大サイズを設定（これより大きい画像は縮小する）
+    MAX_SIZE = 500  # 最大幅、または高さを500pxにする
+
+    # 元の画像のサイズを取得
+    h, w = img.shape[:2]
+
+    # アスペクト比を保ちつつ、MAX_SIZEに収まるように新しいサイズを計算
+    if h > w:
+        new_h, new_w = MAX_SIZE, int(w * MAX_SIZE / h)
+    else:
+        new_h, new_w = int(h * MAX_SIZE / w), MAX_SIZE
+
+    # 画像をリサイズ
+    resized_img = cv2.resize(img, (new_w, new_h), interpolation=cv2.INTER_AREA)
+    # ========================================================
+
+    # リサイズした画像からAIが処理しやすい形に変形
+    pixels = resized_img.reshape(-1, 3)
+
+    # k-means法で5色を抽出（計算設定も少し早くする）
+    # n_init=1 にすることで、計算のやり直し回数を減らして高速化
+    kmeans = KMeans(n_clusters=5, n_init=1, random_state=42)
     kmeans.fit(pixels)
     colors = kmeans.cluster_centers_
 
